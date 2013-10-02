@@ -38,7 +38,7 @@ where city = 'Kyoto'
 
 -- 4. Get the pids of products ordered through any agent who makes at least one order for a customer in Kyoto. Use joins this time; no subqueries
 
--- join orders to itself
+
 
 -- 5. Get the name of customers who have never placed an order. Use a subquery
 SELECT name
@@ -84,7 +84,16 @@ Having Count(city) IN ( (SELECT MIN (Num ) from (SELECT Count(city) as Num from 
 
 -- 10. Get the name and city of customers who live in a city where the most number of prodcuts are made
 
--- basiclly 11 but only chose the first city
+SELECT customers.name , customers.city 
+from customers
+where city IN (
+SELECT products.city
+from products
+group by products.city
+Having Count(city) IN ( (SELECT MAX (Num ) from (SELECT Count(city) as Num from products group by products.city)as a ) )
+LIMIT 1
+)
+
 
 -- 11. Get the name and city of customers who live in ANY city where the most number of products are made
 
@@ -113,11 +122,10 @@ ORDER BY dollars desc
 
 -- 14. 	Show all customer names (in order) and their total ordered, and nothing more. Use coalesce to avoid showing nulls
 
--- Have to fix this one so that is uses a coalese to not show null for weyland
-Select a.name , Sum (dollars) as TOTAL
+Select a.name ,COALESCE( Sum (dollars ), 0) as TOTAL 
 from (Select customers.name , customers.cid ,orders.dollars
 from orders
-Full Outer join customers
+full outer join customers
 on orders.cid = customers.cid) as a
 group by a.name,a.cid
 order by a.name
@@ -145,9 +153,18 @@ ON orders.ordno = a.ordno
 
 
 
-
-
-
-
+Select  orders.ordno , orders.dollars , a.RECALCULATED
+from orders
+FULL OUTER JOIN (SELECT orders.ordno , (products.priceUSD * orders.qty ) - ((products.priceUSD * orders.qty )* (customers.discount / 100))   as RECALCULATED
+from customers , agents , products , orders
+where orders.cid = customers.cid
+and orders.aid = agents.aid
+and orders.pid = products.pid
+group by orders.ordno , (products.priceUSD * orders.qty ) - ((products.priceUSD * orders.qty )* (customers.discount / 100))
+order by ordno) as a
+ON orders.ordno = a.ordno
+group by orders.ordno , a.ordno , a.RECALCULATED
+having orders.dollars != a.RECALCULATED
+order by orders.ordno
 
 
