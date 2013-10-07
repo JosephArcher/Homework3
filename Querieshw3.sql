@@ -6,7 +6,11 @@
 
 SELECT distinct city  -- The Outer Query will take the aids and find the city where they live
 FROM agents
-WHERE aid IN (SELECT aid FROM orders WHERE cid = 'c002') -- Inner Query will return the aid of agents who are booking an order for c002
+WHERE aid IN (
+			SELECT aid 
+			FROM orders 
+			WHERE cid = 'c002' -- Inner Query will return the aid of agents who are booking an order for c002
+			) 
 
 -- 2. Get the cities of agents booking an order for customer c002. This time use joins; no subqueries
 
@@ -21,10 +25,13 @@ WHERE orders.cid = 'c002'  -- Checks the orders table for any cid equal to c002
 SELECT distinct pid
 FROM orders     
 WHERE aid IN (
-SELECT distinct aid  -- This Query Returns the aids from the orders table that have the same cid's returned from the inner query
-FROM orders 
-WHERE cid IN ( SELECT cid FROM customers where city = 'Kyoto' ) -- The Inner most Query returns the cid's for customers in Kyoto
-) 
+		SELECT distinct aid  -- This Query Returns the aids from the orders table that have the same cid's returned from the inner query
+		FROM orders 
+		WHERE cid IN (
+			SELECT cid
+			FROM customers 
+			where city = 'Kyoto' ) -- The Inner most Query returns the cid's for customers in Kyoto
+			) 
 
 -- 4. Get the pids of products ordered through any agent who makes at least one order for a customer in Kyoto. Use joins this time; no subqueries
 
@@ -39,8 +46,8 @@ order by b.pid
 SELECT name
 FROM customers
 where cid NOT IN ( -- used not in so that it returns customers who did not order
-	SELECT distinct cid -- The inner query returns cid who placed an order
-	FROM orders  )
+			SELECT distinct cid -- The inner query returns cid who placed an order
+			FROM orders  )
 	
 -- 6. Get the name of customers who have never placed an order. Use an outer join
 
@@ -148,6 +155,10 @@ order by ordno) as a
 ON orders.ordno = a.ordno
 
 -- 17. 	Create an error in the dollars column of the Orders table so that you can verify your accuracy checking query
+
+Update orders
+set dollars = '12'
+where orders.ordno = '1011';
 
 Select  orders.ordno , orders.dollars , a.RECALCULATED
 from orders
